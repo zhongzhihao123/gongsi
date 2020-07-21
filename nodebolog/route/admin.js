@@ -31,6 +31,15 @@ admin.post('/user-edit', require('./admin/user-edit-fn'))
 //创建用户编辑功能
 admin.post('/user-modify', require('./admin/user-modify'));
 
+//删除用户功能
+admin.get('/delete', require('./admin/user-delete'));
+
+//文章列表页面路由
+admin.get('/article', require('./admin/article'))
+
+//文章编辑页面路由
+admin.get('/article-edit', require('./admin/article-edit'));
+
 //实现退出功能
 admin.get('/logout', require('./admin/logout'))
 
