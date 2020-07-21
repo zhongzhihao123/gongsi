@@ -61,8 +61,9 @@ const User = mongoose.model('User', userSchema);
 //     console.log('用户创建失败')
 // })
 
+
 //验证用户信息
-const validateUser = (user) => {
+const validateUser = user => {
     //定义对象验证规则
     const schema = {
             username: Joi.string().min(2).max(12).required().error(new Error('用户不符合')),
