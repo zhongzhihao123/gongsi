@@ -62,17 +62,17 @@ const User = mongoose.model('User', userSchema);
 // })
 
 //验证用户信息
-const validateUser = () => {
+const validateUser = (user) => {
     //定义对象验证规则
     const schema = {
             username: Joi.string().min(2).max(12).required().error(new Error('用户不符合')),
             email: Joi.string().email().required().error(new Error('邮件格式不符合')),
             password: Joi.string().regex(/^[a-zA-Z0-9]{3,30}$/).required().error(new Error('密码错误')),
-            role: Joi.string().valid('normal', 'admin').required.error(new Error('角色值非法')),
+            role: Joi.string().valid('normal', 'admin').required().error(new Error('角色值非法')),
             state: Joi.number().valid(0, 1).required().error(new Error('状态值非法'))
         }
         //实施验证
-    return await Joi.validate(req.body, schema);
+    return Joi.validate(user, schema);
     //修改了
 }
 
