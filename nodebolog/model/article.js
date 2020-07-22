@@ -5,7 +5,7 @@ const articleSchema = new mongoose.Schema({
         title: {
             type: String,
             maxlength: 20,
-            minlength: 4,
+            minlength: 1,
             require: [true, '请填写文章标题']
         },
         author: {
@@ -26,7 +26,7 @@ const articleSchema = new mongoose.Schema({
         }
     })
     //根据规则创建集合
-const Article = mongoose.model('Article');
+const Article = mongoose.model('Article', articleSchema);
 
 
 //导出

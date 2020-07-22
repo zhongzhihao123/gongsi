@@ -40,6 +40,11 @@ admin.get('/article', require('./admin/article'))
 //文章编辑页面路由
 admin.get('/article-edit', require('./admin/article-edit'));
 
+//点击发布文章功能
+admin.get('article-add', require('./admin/article-add'))
+    // 实现文章添加功能的路由
+admin.post('/article-add', require('./admin/article-add'))
+
 //实现退出功能
 admin.get('/logout', require('./admin/logout'))
 

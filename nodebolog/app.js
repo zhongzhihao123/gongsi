@@ -8,6 +8,11 @@ const bodyPaser = require('body-parser');
 //导入express-session模块
 const session = require('express-session')
 
+//导入art-template模块
+const template = require('art-template');
+//导入dateFormate第三方模块  在app.js文件导入时为了全局都可以用这个时间格式
+const dateFormat = require('dateformat')
+
 //创建网站服务器
 const app = express();
 
@@ -26,6 +31,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'art');
 //当渲染后缀为art的模板时，所使用的模板引擎是什么
 app.engine('art', require('express-art-template'));
+//向模板内部导入dateformate变量
+template.defaults.imports.dateFormat = dateFormat
 
 //处理静态资源
 app.use(express.static(path.join(__dirname, 'public')))
@@ -37,7 +44,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 const home = require('./route/home')
 const admin = require('./route/admin');
 const bodyParser = require('body-parser');
-const { nextTick } = require('process');
+
 
 //  中间件 拦截请求 判断用户登录状态
 app.use('/admin', require('./middleware/localGuard'))

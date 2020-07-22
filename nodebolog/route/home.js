@@ -1,11 +1,13 @@
 //引用express框架
 const express = require('express')
-//创建博客展示页面路由
+    //创建博客展示页面路由
 const home = express.Router()
 
-home.get('/',(req,res)=>{
-    res.send('欢迎来到博客首页')
-})
+//博客前台首页的展示页面
+home.get('/', require('./home/index'));
+
+//博客前台文章详情展示页面
+home.get('/article', require('./home/article'));
 
 
 module.exports = home;
