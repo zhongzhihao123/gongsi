@@ -407,12 +407,572 @@ const articleSchema = new mongoose.Schema({
         }
     })
     //根据规则创建集合
-const Article = mongoose.model('Article');
+const Article = mongoose.model('Article'，articleSchema);
 
 
 //导出
 module.exports = {
     Article
 }
+```
+
+### 发布文章功能
+
+修改article.js
+
+```
+<a href="/admin/article-edit" class="btn btn-primary new">发布新文章</a>
+```
+
+修改article-edit.art关于表单的提交方式还有数据
+
+```javascript
+  <form class="form-container" action="/admin/article-add" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" class="form-control" placeholder="请输入文章标题" name="title">
+                </div>
+                <div class="form-group">
+                    <label>作者</label>
+                    <input name="author" type="text" class="form-control" readonly value="{{@userInfo._id}}">
+                </div>
+                <div class="form-group">
+                    <label>发布时间</label>
+                    <input name="publishDate" type="date" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                   <label for="exampleInputFile">文章封面</label>
+                   <!--
+                        multiple 允许用户一次性选择多个文件
+                   -->
+                   <input type="file" name="cover" id="file" >
+                   <div class="thumbnail-waper">
+                       <img class="img-thumbnail" src="" id="preview">
+                   </div>
+                </div>
+                <div class="form-group">
+                    <label>内容</label>
+                    <textarea name="content" class="form-control" id="editor"></textarea>
+                </div>
+```
+
+
+
+创建点击发布文章的js文件  article-add.js并在admin导入路由 还有创建文章功能
+
+```
+//点击发布文章功能
+admin.get('article-add', require('./admin/article-add'))
+// 实现文章添加功能的路由
+admin.post('/article-add', require('./admin/article-add'))
+```
+
+### 项目包含的知识点
+
+#### formidable
+
+ **npm install formidable**
+
+**作用：解析表单，支持get请求参数，post请求参数、文件上传。**
+
+```javascript
+/ 引入formidable模块
+ const formidable = require('formidable');
+ // 创建表单解析对象
+ const form = new formidable.IncomingForm();
+ // 设置文件上传路径
+ form.uploadDir = "/my/dir";
+ // 是否保留表单上传文件的扩展名
+ form.keepExtensions = false;
+ // 对表单进行解析
+ form.parse(req, (err, fields, files) => {
+     // fields 存储普通请求参数
+         // files 存储上传的文件信息
+ });
+
+```
+
+在article-add.js文件中
+
+```
+//引入 formidable模块
+const formidable = require('formidable');
+//引入路径
+const path = require('path')
+
+module.exports = (req, res) => {
+    //创建表单解析对象
+    const form = new formidable.IncomingForm();
+    //配置上传文件的存放位置  存放在public的uploads目录上
+    form.uploadDir = path.join(__dirname, '../', '../', 'public', 'uploads');
+    //保留上传文件的后缀，默认为false要用true
+    form.keepExtensions = true;
+    //解析表单
+    form.parse(req, (err, fields, files) => {
+        //1.err错误的对象 ，如果表单解析失败，err存错误信息，如果成功，为null
+        //2.fields对象类型 保存普通表单数据
+        //3. files对象类型 保存了和上传文件相关的数据
+        res.send(files)
+    })
+}
+```
+
+要想发布文章的作者自动填入该用户的id则在form表单的author加入默认值
+
+```
+<label>作者</label>
+                    <input name="author" type="text" class="form-control" readonly value="{{@userInfo._id}}">
+```
+
+### 读取表单的文件并渲染到页面上
+
+#### 
+
+```javascript
+var reader = new FileReader();
+//读取文件，读的是二进制，由于不能异步所以需要监听
+ reader.readAsDataURL('文件');
+//监听
+ reader.onload = function () {
+     console.log(reader.result); 
+ }
+
+```
+
+在article-edit.art上 读取功能
+
+```javascript
+        
+        // 选择文件上传控件
+        var file = document.querySelector('#file');
+        var preview = document.querySelector('#preview');
+        // 当用户选择完文件以后
+        file.onchange = function () {
+            // 1 创建文件读取对象
+            var reader = new FileReader();
+            // 用户选择的文件列表
+            // console.log(this.files[0])
+            // 2 读取文件
+            reader.readAsDataURL(this.files[0]);
+            // 3 监听onload事件
+            reader.onload = function () {
+            //reader.result 读到的是二进制，可以让在那个src上
+                console.log(reader.result)
+                // 将文件读取的结果显示在页面中
+                preview.src = reader.result;
+            }
+        }
+```
+
+**如果想读取多个文件,在表单加入 multiple**
+
+### 将文章渲染到文章列表
+
+在article.js文件中
+
+```
+//引入文章集合
+const { Article } = require('../../model/article');
+
+
+module.exports = async(req, res) => {
+    //标识 标识当前访问的是文章管理页面
+    req.app.locals.currentLink = 'article';
+    //查询所有文章数据
+    //populate('author')这个是查询author属性的更详细信息，就是多级查询
+    let articles = await Article.find().populate('author')
+
+    //渲染文章列表页面模板
+    res.render('admin/article.art', {
+        articles: articles
+    })
+
+}
+```
+
+并在article.art中循环
+
+```javascript
+     {{each articles}}
+                    <tr>
+                        <td>{{@$value._id}}</td>
+                        <td>{{$value.title}}</td>
+                        <!--引入dateFormate日期格式化变量，第一个参数就是需要格式的值，第二个表示需要格式成什么样子-->
+                        <td>{{dateFormate($value.publishDate,'yyyy-mm-dd')}}</td>
+                        <td>{{$value.author.username}}</td>
+                        <td>
+                            <a href="article-edit" class="glyphicon glyphicon-edit"></a>
+                            <i class="glyphicon glyphicon-remove" data-toggle="modal" data-target=".confirm-modal"></i>
+                        </td>
+                    </tr>
+                  {{/each}}
+```
+
+
+
+
+
+
+
+#### 时间格式化
+
+npm install dateformat
+
+在app.js全局导入
+
+```
+//导入art-template模块
+const template = require('art-template');
+//导入dateFormat第三方模块  在app.js文件导入时为了全局都可以用这个时间格式
+const dateFormat = require('dateformat')
+
+//向模板内部导入dateformat变量
+template.defaults.imports.dateFormat = dateFormat
+```
+
+在article-art上
+
+```
+<!--引入dateFormat日期格式化变量，第一个参数就是需要格式的值，第二个表示需要格式成什么样子-->
+                        <td>{{dateFormat($value.publishDate,'yyyy-mm-dd')}}</td>
+```
+
+### 数据分页 mongoose-sex-page
+
+**npm install mongoose-sex-page**
+
+```
+const pagination = require('mongoose-sex-page');
+pagination(集合构造函数).page(1) .size(20) .display(8) .exec()
+```
+
+exec向数据库发送请求得到的
+
+```javascript
+"page": 1,//当前页
+"size": 2,//每页显示数据条数
+"total": 5,//总共的数据条数
+"records": [//查询出来的具体数据
+{
+"cover": "\\uploads\\upload_cb428217340991ae8e5ebd6fb62488e9.jpg",
+"_id": "5f17ad9b395b2e2654357fab",
+"title": "测试",
+"author": {
+"state": 0,
+"_id": "5f1654cc59945d27b83b9aab",
+"username": "zhongzhihao",
+"email": "514974922@qq.com",
+"password": "123456",
+"role": "admin",
+"__v": 0
+},
+"publishDate": "2020-07-26T00:00:00.000Z",
+"content": "<p>ces fg</p>",
+"__v": 0
+},
+{
+"cover": "\\uploads\\upload_6f20bff4ebbaa313afa291650c7faa28.jpg",
+"_id": "5f17af32395b2e2654357fac",
+"title": "gfdg'f'd",
+"author": {
+"state": 0,
+"_id": "5f1654cc59945d27b83b9aab",
+"username": "zhongzhihao",
+"email": "514974922@qq.com",
+"password": "123456",
+"role": "admin",
+"__v": 0
+},
+"publishDate": "2020-07-25T00:00:00.000Z",
+"content": "<p>dsfdsafs</p>",
+"__v": 0
+}
+],
+"pages": 3,//总共的页数
+"display": [//客户端显示的页码
+1,
+2,
+3
+]
+```
+
+修改article.js文件
+
+```
+//引入文章集合
+const { Article } = require('../../model/article');
+
+//引入数据分页插件
+const pagination = require('mongoose-sex-page');
+
+
+module.exports = async(req, res) => {
+    //客户端传递过来的页数
+    const pagecurrent = req.query.page;
+    //标识 标识当前访问的是文章管理页面
+    req.app.locals.currentLink = 'article';
+
+    // page 指定当前页
+    // suze 指定每页显示的数据条数
+    // display 指定客户端要显示的页码数量  不是规定只有几页，而是显示几页
+    // exec 向数据库中发送查询请求
+
+    //查询所有文章数据
+    //populate('author')这个是查询author属性的更详细信息，就是多级查询
+
+
+    let articles = await pagination(Article).find().page(pagecurrent).size(2).display(3).populate('author').exec();
+
+
+    //渲染文章列表页面模板
+    res.render('admin/article.art', {
+        articles: articles
+    })
+
+}
+```
+
+修改article.art文件，并修改form接收到的值
+
+把
+
+```
+{{each articles}}改为{{each articles.records}}  //表示数据
+```
+
+
+
+```
+<ul class="pagination">
+                {{if articles.page > 1}}
+                <li>
+                    <a href="/admin/article?page={{articles.page - 1}}">
+                    <span>&laquo;</span>
+                  </a>
+                </li>
+                {{/if}}
+                
+                {{each articles.display}}
+                <li><a href="/admin/article?page={{$value}}">{{$value}}</a></li>
+                {{/each}}
+
+                {{if articles.page < articles.pages}}
+                <li>
+                    <a href="/admin/article?page={{articles.page - 0 + 1}}">
+    		        <span>&raquo;</span>
+    		      </a>
+                </li>
+                {{/if}}
+            </ul>
+```
+
+### mongoDB数据库添加账号
+
+这样别人才不可以随便登录进去这个数据库进行管理
+
+以系统管理员的方式运行powershell
+2. 连接数据库 mongo
+
+3. 查看数据库 show dbs
+
+4. 切换到admin数据库 use admin    创建账号mongoDB要求我们先创建超级管理员账号
+
+5. 创建超级管理员账户 db.createUser()
+
+     `db.createUser({user:'root',pwd:'root',roles:['root']})`
+
+6. 切换到blog数据 use blog
+
+7. 创建普通账号 db.createUser()
+
+     db.createUser({user:'itcast',pwd:'itcast',roles:['readWrite']})
+
+8. 卸载mongodb服务
+         1. 停止服务 net stop mongodb
+             2. mongod --remove
+
+9. 创建mongodb服务
+             mongod --logpath="C:\Program Files\MongoDB\Server\4.1\log\mongod.log" --dbpath="C:\Program\Files\MongoDB\Server\4.1\data" --install –-auth
+
+   10. 启动mongodb服务 net start mongodb
+
+   11. 在项目中使用账号连接数据库
+       
+       user表示数据库用户名  pass表示密码  port端口号（27017）  database数据库名称
+       
+       ​      mongoose.connect('mongodb://user:pass@localhost:port/database')
+
+### 博客首页显示页面
+
+在Home.js文件
+
+```
+
+//博客前台首页的展示页面
+home.get('/', require('./home/index'));
+
+//博客前台文章详情展示页面
+home.get('/article', require('./home/article'));
+
+```
+
+在home目录下创建index.js还有article.js  
+
+复制公共文件public下的index.html 和default.html到view/home下并修改后缀为art，修改样式
+
+防止在客户端的css样式不对
+
+```
+	<link rel="stylesheet" href="/home/css/base.css">
+	<link rel="stylesheet" href="/home/css/article.css">
+```
+
+### 把用户的文章渲染到首页页面上
+
+
+
+```
+//引入文章集合
+const { Article } = require('../../model/article');
+
+//导入分页模块
+const pagination = require('mongoose-sex-page');
+
+
+module.exports = async(req, res) => {
+    //从数据库中查询数据
+    let result = await pagination(Article).find().page(1).size(4).display(5).populate('author').exec()
+
+    res.render('home/default.art', {
+        result: result
+    })
+}
+```
+
+修改default.art
+
+```
+{{each result.records}}
+		<li class="{{$index%2 == 0? 'fl' :'fr'}}">
+			<a href="article.html" class="thumbnail">
+				<img src="{{$value.cover}}">
+			</a>
+			<div class="content">
+				<a class="article-title" href="article.html">{{$value.title}}</a>
+				<div class="article-info">
+					<span class="author">{{$value.author.username}}</span>
+					<span>{{dateFormat($value.publishDate,'yyyy-mm-dd')}}</span>
+				</div>
+				<div class="brief">
+					{{$value.content}}
+				</div>
+			</div>
+		</li>
+	{{/each}}
+```
+
+#### 内容截取部分且去除html标签以及空格
+
+```
+{{@$value.content.replace(/<[^>]+>/g,'').substr(0,150)+'...'}}
+//@去除&nbsp空格 正则匹配html标签
+```
+
+### 分页问题
+
+```
+	<!-- 分页开始 -->
+	<div class="page w1100">
+	{{if result.page>1}}
+		<a href="/home/?page={{result.page-1}}">上一页</a>
+	{{/if}}	
+		{{each result.display}}
+		<a href="/home/?page={{$value}}" class='{{$value == result.page ? 'active' : ''}}'>{{value}}</a>
+		{{/each}}
+	{{if result.page<1}}
+		<a href="#">下一页</a>
+	{{/if}}
+	</div>
+```
+
+### 渲染文章详情页面
+
+修改article.art中a的链接地址
+
+`/home/article?id={{@$value._id}}`
+
+### 文章评论
+
+1. 创建评论集合
+2. 判断用户是否登录，如果用户登录，再允许用户提交评论表单
+3. 在服务器创建文章评论功能对应的路由
+4. 在路由请求处理函数中接收客户端传递过来的评论信息
+5. 将评论信息存储在评论集合中
+6. 将页面重定向回文章详情页面
+7. 在文章详情页面路由中获取文章评论信息并展示在页面中
+
+创建评论数据库comment.js
+
+```
+//引入mongoose模块
+const mongoose = require('mongoose');
+//创建评论集合规则
+const commentSchema = new mongoose.Schema({
+        //文章id
+        aid: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Article'
+        },
+        //评论人用户id
+        uid: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        //评论时间
+        time: {
+            type: Date
+        },
+        //评论内容
+        content: {
+            type: String
+        }
+    })
+    //创建评论集合
+const Comment = mongoose.model('Comment', commentSchema)
+
+module.exports = {
+    Comment: Comment
+}
+```
+
+#### 判断用户是不是超级管理员还是普通用户而且能不能进入用户管理页面
+
+在login.js文件中
+
+```
+      //将用户名角色存储到请求对象中
+            req.session.role = user.role
+  
+  //对用户的角色进行判断
+            if (user.role == 'admin') {
+                //重定向到用户列表页面
+                res.redirect('/admin/user');
+            } else {
+                //重定向到博客首页
+                res.redirect('/home/');
+            }
+```
+
+在localGuard.js文件中
+
+```
+//用户是登陆的，将请求放行 继续判断角色身份
+        if (req.session.role == 'normal') {
+            //普通用户
+            //让它跳转到博客首页，阻止程序向下执行
+            return res.redirect('/home/')
+        }
+        next(); //请求继续放行
 ```
 
