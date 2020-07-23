@@ -976,3 +976,118 @@ module.exports = {
         next(); //请求继续放行
 ```
 
+#### 判断是不是登录，登录可以评论，没登录不可以评论
+
+因为登录信息存储在login.js的userInfo中，则判断这个是否存在就好
+
+在article.art中
+
+```
+<h4>评论</h4>
+					{{if userInfo}}
+					<form class="comment-form">
+						<textarea class="comment"></textarea>
+						<div class="items">
+							<input type="submit" value="提交">
+						</div>
+					</form>
+					{{else}}
+					<div> 请登录再评论</div>
+					{{/if}}
+```
+
+如果退出登录也不能评论，则在退出需要删除信息 在logout.js文件
+
+```
+req.app.locals.userInfo = null
+```
+
+
+
+获取评论的内容还需要加入2个隐藏域
+
+```javascript
+<form class="comment-form" action='/home/comment' method='post'>
+<textarea class="comment"  name='content' ></textarea>
+						<input type='hidden' name='uid' value={{@userInfo._id}}>//判断时哪个用户
+						<input type='hidden' name='aid' value={{@article._id}}>//哪篇文章
+						<div class="items">
+							<input type="submit" value="提交">
+                         </div>
+</form>
+```
+
+在home.js文件
+
+//f发表博客评论功能
+
+`home.post('/comment', require('./home/comment'))`
+
+在home目录下创建comment.js文件
+
+```
+//将评论集合构造函数进行导入
+const { Comment } = require('../../model/comment')
+
+module.exports = async(req, res) => {
+    //接收客户端传递过来的请求参数
+    const { content, uid, aid } = req.body;
+    //将评论信息存储到评论集合中
+    await Comment.create({
+            content: content,
+            uid: uid,
+            aid: aid,
+            time: new Date()
+        })
+        //将 页面重定向回文章详情页面
+    res.redirect('/home/article?id=' + aid)
+}
+```
+
+#### 将评论内容展示到页面
+
+
+
+在article.js文件
+
+```
+const { Article } = require('../../model/article')
+
+//导入评论集合构造函数
+const { Comment } = require('../../model/comment')
+
+module.exports = async(req, res) => {
+    //接收客户传过来的文章id值
+    const id = req.query.id;
+    //根据id查询文章详细信息
+    let article = await Article.findOne({ _id: id }).populate('author')
+
+    //查询当前文章的评论信息
+    let comments = await Comment.find({ aid: id }).populate('uid')
+
+
+
+    res.render('./home/article', {
+        article: article,
+        comments: comments
+    })
+}
+```
+
+在article.art循环评论内容
+
+```
+{{each comments}}
+						<div class="mb10">
+							<div class="article-info">
+								<span class="author">{{$value.uid.author}}</span>
+								<span>{{dateFormat($value.time,'yyyy-mm-dd')}}</span>
+								<span>{{$value.uid.email}}</span>
+							</div>
+							<div class="comment-content">
+								{{$value.content}}
+							</div>
+						</div>
+					{{/each}}	
+```
+
