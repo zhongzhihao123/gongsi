@@ -23,24 +23,32 @@
 				</div>
 				<div class="article-comment">
 					<h4>评论</h4>
-					
-					<form class="comment-form">
-						<textarea class="comment"></textarea>
+					{{if userInfo}}
+					<form class="comment-form" action='/home/comment' method='post'>
+						<textarea class="comment"  name='content'></textarea>
+						<input type='hidden' name='uid' value={{@userInfo._id}}>
+						<input type='hidden' name='aid' value={{@article._id}}>
 						<div class="items">
 							<input type="submit" value="提交">
 						</div>
 					</form>
+					{{else}}
+					<div> 请登录再评论</div>
+					{{/if}}
+
 					<div class="comment-list">
+					{{each comments}}
 						<div class="mb10">
 							<div class="article-info">
-								<span class="author">Coder</span>
-								<span>2020-09-10</span>
-								<span>wjb19891223@163.com</span>
+								<span class="author">{{$value.uid.author}}</span>
+								<span>{{dateFormat($value.time,'yyyy-mm-dd')}}</span>
+								<span>{{$value.uid.email}}</span>
 							</div>
 							<div class="comment-content">
-								nice 就是这样, 非常好 !
+								{{$value.content}}
 							</div>
 						</div>
+					{{/each}}	
 					</div>
 				</div>
 			</div>

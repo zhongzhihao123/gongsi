@@ -9,5 +9,8 @@ home.get('/', require('./home/index'));
 //博客前台文章详情展示页面
 home.get('/article', require('./home/article'));
 
+//f发表博客评论功能
+home.post('/comment', require('./home/comment'))
+
 
 module.exports = home;

@@ -45,6 +45,15 @@ const home = require('./route/home')
 const admin = require('./route/admin');
 const bodyParser = require('body-parser');
 
+// //配置session
+// app.use(session({
+//     secret: 'secret key',
+//     saveUninitialized: false,
+//     cookie: {
+//         maxAge: 24 * 60 * 60 * 1000
+//     }
+// }))
+
 
 //  中间件 拦截请求 判断用户登录状态
 app.use('/admin', require('./middleware/localGuard'))
