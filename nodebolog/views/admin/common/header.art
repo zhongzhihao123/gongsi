@@ -7,6 +7,11 @@
     <!-- /网站标志 -->
     <!-- 用户信息 -->
     <div class="info">
+   
+      <!--  <span class="btn dropdown-toggle" data-toggle="dropdown" style="font-size: 20px;font-weight: 700;margin-top: 38px;">
+            
+            <a href="./admin/article">首页</a>
+            </span>-->
         <div class="profile dropdown fr">
             <span class="btn dropdown-toggle" data-toggle="dropdown">
             
@@ -15,7 +20,7 @@
 				<span class="caret"></span>
             </span>
             <ul class="dropdown-menu">
-                <li><a href="user-edit.html">个人资料</a></li>
+                <!--<li><a href="user-edit.html">个人资料</a></li>-->
                 <li><a href="/admin/logout">退出登录</a></li>
             </ul>
         </div>

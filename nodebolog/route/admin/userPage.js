@@ -25,6 +25,7 @@ module.exports = async(req, res) => {
     res.render('admin/user', {
         users: users,
         page: page,
-        total: total
+        total: total,
+        count: count
     });
 }
