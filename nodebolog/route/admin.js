@@ -44,6 +44,10 @@ admin.get('/article-edit', require('./admin/article-edit'));
 admin.get('article-add', require('./admin/article-add'))
     // 实现文章添加功能的路由
 admin.post('/article-add', require('./admin/article-add'))
+    //创建文章编辑功能
+admin.post('/article-modify', require('./admin/article-modify'));
+//删除文章功能
+admin.get('/deleteArticle', require('./admin/article-delete'));
 
 //实现退出功能
 admin.get('/logout', require('./admin/logout'))

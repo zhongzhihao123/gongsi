@@ -12,5 +12,8 @@ home.get('/article', require('./home/article'));
 //f发表博客评论功能
 home.post('/comment', require('./home/comment'))
 
+// //点击首页跳转到首页页面
+// home.get('/', require('./home/index'))
+
 
 module.exports = home;
